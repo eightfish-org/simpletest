@@ -20,35 +20,21 @@ pub struct Article {
 pub struct ArticleModule;
 
 impl ArticleModule {
-    fn get_one(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
+    fn get_one(req: &mut Request) -> Result<Response<Article>> {
         let params = req.parse_urlencoded()?;
         let article_id = params.get("id").ok_or(anyhow!("id error"))?;
 
-        let (sql, sql_params) = Article::build_get_by_id(article_id);
-        let rowset = pg_conn.query(&sql, &sql_params)?;
-
-        let results = if let Some(row) = rowset.rows.into_iter().next() {
-            vec![Article::from_row(row)]
+        let article = sql_query_one!(Article, article_id);
+        let results = if let Some(article) = article {
+            vec![article]
         } else {
             bail!("no this item".to_string());
         };
 
-        let info = Info {
-            model_name: Article::model_name(),
-            action: HandlerCRUD::GetOne,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new(Status::Successful, results))
     }
 
-    fn new_article(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
+    fn new_article(req: &mut Request) -> Result<Response<Article>> {
         let params = req.parse_urlencoded()?;
         let title = params
             .get("title")
@@ -75,24 +61,15 @@ impl ArticleModule {
             authorname,
         };
 
-        let (sql_statement, sql_params) = article.build_insert();
-        _ = pg_conn.execute(&sql_statement, &sql_params)?;
+        if let Err(_) = sql_create_one!(article) {
+            // handle error
+        }
+        let ret = vec![article];
 
-        let results: Vec<Article> = vec![article];
-
-        let info = Info {
-            model_name: Article::model_name(),
-            action: HandlerCRUD::Create,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new(Status::Successful, ret))
     }
 
-    fn update(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
+    fn update(req: &mut Request) -> Result<Response<Article>> {
         let params = req.parse_urlencoded()?;
 
         let id = params.get("id").ok_or(anyhow!("id error"))?.to_owned();
@@ -109,12 +86,9 @@ impl ArticleModule {
             .ok_or(anyhow!("authorname error"))?
             .to_owned();
 
-        let (sql, sql_params) = Article::build_get_by_id(id.as_str());
-        let rowset = pg_conn.query(&sql, &sql_params)?;
-        match rowset.rows.into_iter().next() {
-            Some(row) => {
-                let old_article = Article::from_row(row);
-
+        let old_article = sql_query_one!(Article, id);
+        match old_article {
+            Some(old_article) => {
                 let article = Article {
                     id,
                     title,
@@ -123,18 +97,12 @@ impl ArticleModule {
                     ..old_article
                 };
 
-                let (sql, sql_params) = article.build_update();
-                _ = pg_conn.execute(&sql, &sql_params)?;
+                if let Err(_) = sql_update_one!(article) {
+                    // handle error
+                }
+                let ret = vec![article];
 
-                let results: Vec<Article> = vec![article];
-
-                let info = Info {
-                    model_name: Article::model_name(),
-                    action: HandlerCRUD::Update,
-                    extra: "".to_string(),
-                };
-
-                Ok(Response::new(Status::Successful, info, results))
+                Ok(Response::new(Status::Successful, ret))
             }
             None => {
                 bail!("update action: no item in db")
@@ -142,30 +110,37 @@ impl ArticleModule {
         }
     }
 
-    fn delete(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
+    fn delete(req: &mut Request) -> Result<Response<Article>> {
         let params = req.parse_urlencoded()?;
 
         let id = params.get("id").ok_or(anyhow!("id error"))?.to_owned();
+        
+        // ensure there is the target item in db
+        let article: Article = sql_query_one!(Article, id);
 
-        let (sql, sql_params) = Article::build_delete(id.as_str());
-        _ = pg_conn.execute(&sql, &sql_params)?;
+        if let Err(_) = sql_delete_one!(article) {
+            // handle error
+        }
+        let ret = vec![article];
 
-        let info = Info {
-            model_name: Article::model_name(),
-            action: HandlerCRUD::Delete,
-            extra: "".to_string(),
-        };
-        let results: Vec<Article> = vec![];
+        Ok(Response::new(Status::Successful, ret))
 
-        Ok(Response::new(Status::Successful, info, results))
+        // let (sql, sql_params) = Article::build_delete(id.as_str());
+        // _ = pg_conn.execute(&sql, &sql_params)?;
+
+        // let info = Info {
+        //     model_name: Article::model_name(),
+        //     action: HandlerCRUD::Delete,
+        //     extra: "".to_string(),
+        // };
+        // let results: Vec<Article> = vec![];
+
+        // Ok(Response::new(Status::Successful, info, results))
     }
 
     fn version(_req: &mut Request) -> Result<Response> {
         let ret = r#"{"version": 1.3}"#.to_string();
-        let response = Response::from_str(Status::Successful, Default::default(), ret);
+        let response = Response::from_str(Status::Successful, ret);
 
         Ok(response)
     }
