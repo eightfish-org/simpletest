@@ -24,18 +24,18 @@ services:
       - cache_1
       - db_1
 
-  http_gate_1:
-    image: http_gate:latest
-    restart: always
-    ports:
-      - "3000:3000"
-    environment:
-      - SPIN_VARIABLE_REDIS_HOST=cache_1:6379
-      - RUST_LOG=info
-    command: spin up -f http_gate_spin.toml --listen 0.0.0.0:3000 -e REDIS_URL_ENV=redis://cache_1:6379
-    depends_on:
-      - cache_1
-      - db_1
+  # http_gate_1:
+  #   image: http_gate:latest
+  #   restart: always
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - SPIN_VARIABLE_REDIS_HOST=cache_1:6379
+  #     - RUST_LOG=info
+  #   command: spin up -f http_gate_spin.toml --listen 0.0.0.0:3000 -e REDIS_URL_ENV=redis://cache_1:6379
+  #   depends_on:
+  #     - cache_1
+  #     - db_1
 
   db_1:
     image: postgres:15.2-alpine

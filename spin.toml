@@ -1,0 +1,28 @@
+spin_manifest_version = 2
+
+# General identification information
+[application]
+name = "simpletest"
+version = "0.1.0"
+description = "simple test"
+
+[variables]
+redis_url = { required = true }  # will be filled out in ENV
+proto_id = { required = true }  # will be filled out in ENV
+
+[[trigger.redis]]
+address = "{{redis_url}}"
+channel = "vin2worker:{{proto_id}}"
+component = "simpletest"
+
+[component.simpletest]
+description = "The component simpletest."
+source = "target/wasm32-wasip1/release/simpletest.wasm"
+
+[component.simpletest.variables]
+redis_url = "{{ redis_url}}"
+proto_id = "{{ proto_id }}"
+
+# How to build the Wasm module from source
+[component.simpletest.build]
+command = "cargo build --target wasm32-wasip1 --release"

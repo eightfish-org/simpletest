@@ -25,8 +25,10 @@ impl ArticleModule {
     fn get_one(req: &mut Request) -> Result<Response> {
         let params = req.parse_urlencoded()?;
         let article_id = params.get("id").ok_or(anyhow!("id error"))?;
+        println!("article_id: {}", article_id);
 
         let article = sql_query_one!(Article, article_id);
+        println!("article: {:?}", article);
         let results: Vec<Article> = if let Some(article) = article {
             vec![article]
         } else {
@@ -117,13 +119,17 @@ impl ArticleModule {
     }
 
     fn delete(req: &mut Request) -> Result<Response> {
+        println!("in delete handler: req");
         let params = req.parse_urlencoded()?;
 
         let id = params.get("id").ok_or(anyhow!("id error"))?.to_owned();
+        println!("in delete handler: id: {}", id);
 
         // ensure there is the target item in db
         if let Some(article) = sql_query_one!(Article, &id) {
+            println!("in delete handler: article: {:?}", article);
             if let Ok(instance) = sql_delete_one!(req, article) {
+                println!("in delete handler: instance: {:?}", instance);
                 let ret = vec![instance];
                 Ok(Response::new(Status::Successful, ret))
             } else {
@@ -135,7 +141,7 @@ impl ArticleModule {
     }
 
     fn version(_req: &mut Request) -> Result<Response> {
-        let ret = r#"{"version": 1.3}"#.to_string();
+        let ret = r#"{"version": 1.13}"#.to_string();
         let response = Response::from_str(Status::Successful, ret);
 
         Ok(response)

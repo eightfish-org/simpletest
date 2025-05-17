@@ -1,4 +1,4 @@
-POST http://127.0.0.1:3000/article/update
+PUT http://127.0.0.1:3000/simpletest/v1/article/update
 
 [FormParams]
 id: {{id}}

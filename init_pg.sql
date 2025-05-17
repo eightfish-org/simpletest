@@ -10,4 +10,3 @@ CREATE TABLE article_idhash (
 	hash varchar NOT NULL
 );
 
-

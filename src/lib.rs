@@ -27,14 +27,16 @@ pub fn build_app() -> EightFishApp {
     sapp
 }
 
+// OnceCell
+
 /// Main entry
 #[redis_component]
 fn on_message(message: Bytes) -> Result<()> {
     // later put this construtor to outer OnceCell
     let app = build_app();
-    let aw = spin_worker::Worker::mount(app);
+    let sw = spin_worker::Worker::mount(app);
 
-    aw.work(message)?;
+    sw.work(message)?;
 
     Ok(())
 }
