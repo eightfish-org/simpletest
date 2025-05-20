@@ -1,4 +1,4 @@
-DELETE http://127.0.0.1:3000/simpletest/v1/article/delete?id={{id}}
+DELETE http://127.0.0.1:3000/simpletest/v1/article/delete
 
-# [FormParams]
-# id: {{id}}
+[FormParams]
+id: {{id}}
