@@ -1,7 +1,9 @@
 use anyhow::{anyhow, bail};
 use eightfish_derive::EightFishModel;
 use eightfish_sdk::{EightFishModel, Module, Request, Response, Result, Router, Status};
+use http::HeaderName;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use spin_sdk::pg::{DbValue, Decode, ParameterValue};
 use spin_worker::{
     sql_create_one, sql_delete, sql_delete_one, sql_query, sql_query_one, sql_update,
@@ -73,7 +75,17 @@ impl ArticleModule {
         if let Ok(article) = ret {
             Ok(Response::new(Status::Successful, vec![article]))
         } else {
-            Ok(Response::from_str(Status::Failed, "error".to_string()))
+            // example for return a failed json response, with a custom header setting
+            let json_result = json!({
+                "status": "failed",
+                "info": "error when create a new article",
+            });
+            let mut res = Response::from_failed(json_result);
+            res.set_header(
+                HeaderName::from_static("xxx-yyy-zzz"),
+                "whatever".parse().unwrap(),
+            );
+            Ok(res)
         }
     }
 
@@ -119,17 +131,13 @@ impl ArticleModule {
     }
 
     fn delete(req: &mut Request) -> Result<Response> {
-        println!("in delete handler: req");
         let params = req.parse_urlencoded()?;
 
         let id = params.get("id").ok_or(anyhow!("id error"))?.to_owned();
-        println!("in delete handler: id: {}", id);
 
         // ensure there is the target item in db
         if let Some(article) = sql_query_one!(Article, &id) {
-            println!("in delete handler: article: {:?}", article);
             if let Ok(instance) = sql_delete_one!(req, article) {
-                println!("in delete handler: instance: {:?}", instance);
                 let ret = vec![instance];
                 Ok(Response::new(Status::Successful, ret))
             } else {
