@@ -37,7 +37,7 @@ impl ArticleModule {
             bail!("no this item".to_string());
         };
 
-        Ok(Response::new(Status::Successful, results))
+        Ok(Response::new_check(Status::Successful, results))
     }
 
     fn new_article(req: &mut Request) -> Result<Response> {
@@ -73,14 +73,14 @@ impl ArticleModule {
         let ret = sql_create_one!(req, article);
 
         if let Ok(article) = ret {
-            Ok(Response::new(Status::Successful, vec![article]))
+            Ok(Response::new_check(Status::Successful, vec![article]))
         } else {
             // example for return a failed json response, with a custom header setting
             let json_result = json!({
                 "status": "failed",
                 "info": "error when create a new article",
             });
-            let mut res = Response::from_failed(json_result);
+            let mut res = Response::new_uncheck(Status::Failed, json_result);
             res.set_header(
                 HeaderName::from_static("xxx-yyy-zzz"),
                 "whatever".parse().unwrap(),
@@ -119,7 +119,7 @@ impl ArticleModule {
 
                 if let Ok(instance) = sql_update_one!(req, article) {
                     let ret = vec![instance];
-                    Ok(Response::new(Status::Successful, ret))
+                    Ok(Response::new_check(Status::Successful, ret))
                 } else {
                     bail!("update action: db operation error.")
                 }
@@ -139,7 +139,7 @@ impl ArticleModule {
         if let Some(article) = sql_query_one!(Article, &id) {
             if let Ok(instance) = sql_delete_one!(req, article) {
                 let ret = vec![instance];
-                Ok(Response::new(Status::Successful, ret))
+                Ok(Response::new_check(Status::Successful, ret))
             } else {
                 bail!("delete action: error in db")
             }
@@ -150,7 +150,7 @@ impl ArticleModule {
 
     fn version(_req: &mut Request) -> Result<Response> {
         let ret = r#"{"version": 1.19}"#.to_string();
-        let response = Response::from_str(Status::Successful, ret);
+        let response = Response::from_str_uncheck(Status::Successful, ret);
 
         Ok(response)
     }
