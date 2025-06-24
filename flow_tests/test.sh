@@ -1,0 +1,1 @@
+ hurl --test flow.hurl

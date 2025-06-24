@@ -1,4 +1,4 @@
 DELETE http://127.0.0.1:3000/simpletest/v1/article/delete
 
-[FormParams]
+[Form]
 id: {{id}}

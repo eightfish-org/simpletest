@@ -4,9 +4,3 @@ CREATE TABLE article (
 	content text NOT NULL,
 	authorname varchar(40) NOT NULL
 );
-
-CREATE TABLE article_idhash (
-	id varchar PRIMARY KEY,
-	hash varchar NOT NULL
-);
-
