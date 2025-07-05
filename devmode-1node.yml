@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   vintage_1:
-    image: miketang84/vintage:20240928
+    image: vintage:latest
     restart: always
     ports:
       - "8001:8001"
@@ -13,29 +13,26 @@ services:
       - db_1
     
   dtomcat_1:
-    image: miketang84/dtomcat:20240928
-    restart: always
-    environment:
-      - REDIS_HOST=cache_1:6379
-      - DB_HOST=db_1:5432
-      - RUST_LOG=info
-    command: dtomcat
-    depends_on:
-      - cache_1
-      - db_1
-
-  http_gate_1:
-    image: miketang84/http_gate:20240928
+    image: dtomcat:latest
     restart: always
     ports:
       - "3000:3000"
     environment:
-      - SPIN_VARIABLE_REDIS_HOST=cache_1:6379
+      - REDIS_HOST=cache_1:6379
+      - DB_HOST=db_1:5432
+      - REDIS_URL=redis://cache_1:6379
+      - DB_URL=postgresql://postgres:postgres@db_1:5432/#proto?sslmode=disable
+      - OUTBOUND_HOST1=https://xxx.com
+      - OUTBOUND_HOST2=https://yyy.com
+      - OUTBOUND_HOST3=https://zzz.com
       - RUST_LOG=info
-    command: spin up -f http_gate_spin.toml --listen 0.0.0.0:3000 -e REDIS_URL_ENV=redis://cache_1:6379
+      - SPIN_ENV_DEMO1=xxxxxxyyyzzzz
+      - SPIN_ENV_DEMO2=zzzzyyyxxx
+    command: dtomcat
     depends_on:
       - cache_1
       - db_1
+      - vintage_1
 
   db_1:
     image: postgres:15.2-alpine

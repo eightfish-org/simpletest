@@ -1,6 +1,6 @@
-POST http://127.0.0.1:3000/article/update
+PUT http://127.0.0.1:3000/simpletest/v1/article/update
 
-[FormParams]
+[Form]
 id: {{id}}
 title: test_updated
 content: updated, this is the content of test111, updated.
